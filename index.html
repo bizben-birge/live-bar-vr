@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Live Bar — сцена для вокала</title>
+<meta name="theme-color" content="#0d0907">
+<style>
+  :root { --bg:#0d0907; --fg:#f6ece2; --muted:#bfae9f; --accent:#ff4f8b; --accent2:#ffb36b; }
+  * { box-sizing:border-box; }
+  html,body { margin:0; height:100%; background:var(--bg); color:var(--fg); font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; overflow:hidden; }
+  canvas { display:block; touch-action:none; cursor:grab; }
+  canvas:active { cursor:grabbing; }
+  #ui { position:fixed; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px;
+        background: radial-gradient(1200px 700px at 50% 60%, rgba(40,18,10,.55), rgba(8,5,4,.92)); transition: opacity .6s ease, visibility .6s; z-index:5; padding:16px; text-align:center; }
+  #ui.hidden { opacity:0; visibility:hidden; }
+  h1 { margin:0; font-size: clamp(28px, 6vw, 54px); letter-spacing:.02em; font-weight:800;
+       background: linear-gradient(90deg, var(--accent2), var(--accent)); -webkit-background-clip:text; background-clip:text; color:transparent;
+       animation: glow 3s ease-in-out infinite; }
+  @keyframes glow { 50% { filter: drop-shadow(0 0 14px rgba(255,79,139,.55)); } }
+  p.sub { margin:0; color:var(--muted); max-width:520px; line-height:1.45; }
+  .bar { width:min(360px, 80vw); height:8px; border-radius:99px; background:rgba(255,255,255,.08); overflow:hidden; }
+  .bar i { display:block; height:100%; width:0%; border-radius:99px; background:linear-gradient(90deg,var(--accent2),var(--accent)); transition: width .25s ease; }
+  .row { display:flex; gap:12px; flex-wrap:wrap; justify-content:center; }
+  button { border:0; border-radius:999px; padding:16px 30px; font-size:17px; font-weight:700; color:#1a0d08; cursor:pointer;
+           background: linear-gradient(90deg, var(--accent2), var(--accent)); box-shadow: 0 8px 30px rgba(255,79,139,.35);
+           transition: transform .2s cubic-bezier(.2,.8,.2,1.4), box-shadow .2s; }
+  button:hover { transform: translateY(-2px) scale(1.04); box-shadow: 0 12px 40px rgba(255,79,139,.5); }
+  button:active { transform: scale(.97); }
+  button.ghost { background: rgba(255,255,255,.08); color:var(--fg); box-shadow:none; border:1px solid rgba(255,255,255,.15); }
+  button[disabled] { opacity:.45; cursor:default; transform:none; }
+  #hint { position:fixed; left:50%; bottom:18px; transform:translateX(-50%); padding:10px 18px; border-radius:999px;
+          background:rgba(0,0,0,.45); color:var(--muted); font-size:13px; z-index:4; backdrop-filter: blur(6px); white-space:nowrap; transition:opacity .5s; }
+  #enterSmall { position:fixed; right:16px; top:16px; z-index:4; padding:12px 20px; font-size:14px; display:none; }
+  #msg { color:var(--muted); font-size:13px; min-height:1em; }
+</style>
+</head>
+<body>
+<div id="ui">
+  <h1>Live Bar</h1>
+  <p class="sub">Живой бар со зрителями — сцена для вокальной практики в VR-шлеме.</p>
+  <div class="bar"><i id="prog"></i></div>
+  <div id="msg">Загрузка…</div>
+  <div class="row">
+    <button id="enterVR" disabled>Войти в VR</button>
+    <button id="enterView" class="ghost" disabled>Посмотреть на экране</button>
+  </div>
+</div>
+<button id="enterSmall">Войти в VR</button>
+<div id="hint" style="opacity:0">Перетаскивайте, чтобы осмотреться</div>
+<script type="importmap">
+{ "imports": { "three": "./vendor/three.module.min.js", "three/addons/": "./vendor/jsm/" } }
+</script>
+<script type="module" src="./main.js"></script>
+</body>
+</html>
