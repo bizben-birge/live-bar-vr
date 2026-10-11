@@ -1,4 +1,4 @@
-import * as THREE from 'three';
+﻿import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
@@ -35,7 +35,7 @@ const L = await (await fetch('assets/layout.json')).json();
 const CAP = new THREE.Vector3(...L.capture);
 
 // ------------------------------------------------------------------ room: 360 render projected onto proxy geometry
-const PANO = Q.get('pano') || 'assets/pano.jpg';
+const PANO = Q.get('pano') || 'assets/pano.jpg?v=2';
 const pano = await texLoader.loadAsync(PANO);
 pano.colorSpace = THREE.NoColorSpace;          // already display-referred, pass through untouched
 pano.generateMipmaps = false;
@@ -461,14 +461,14 @@ async function enterVR() {
     await renderer.xr.setSession(session);
     $('ui').classList.add('hidden'); $('enterSmall').style.display = 'none';
   } catch (err) {
-    $('msg').textContent = 'Не удалось запустить VR: ' + err.message;
+    $('msg').textContent = 'РќРµ СѓРґР°Р»РѕСЃСЊ Р·Р°РїСѓСЃС‚РёС‚СЊ VR: ' + err.message;
   }
 }
 const xrOK = !!navigator.xr && await navigator.xr.isSessionSupported('immersive-vr').catch(() => false);
 $('prog').style.width = '100%';
 $('enterView').disabled = false;
-if (xrOK) { $('enterVR').disabled = false; $('msg').textContent = 'Готово. Нажмите «Войти в VR». В шлеме: курок — встать лицом к залу, боковая кнопка — звук зала вкл/выкл.'; }
-else { $('enterVR').textContent = 'VR недоступен в этом браузере'; $('msg').textContent = 'Откройте эту ссылку в браузере шлема Meta Quest для режима VR.'; }
+if (xrOK) { $('enterVR').disabled = false; $('msg').textContent = 'Р“РѕС‚РѕРІРѕ. РќР°Р¶РјРёС‚Рµ В«Р’РѕР№С‚Рё РІ VRВ». Р’ С€Р»РµРјРµ: РєСѓСЂРѕРє вЂ” РІСЃС‚Р°С‚СЊ Р»РёС†РѕРј Рє Р·Р°Р»Сѓ, Р±РѕРєРѕРІР°СЏ РєРЅРѕРїРєР° вЂ” Р·РІСѓРє Р·Р°Р»Р° РІРєР»/РІС‹РєР».'; }
+else { $('enterVR').textContent = 'VR РЅРµРґРѕСЃС‚СѓРїРµРЅ РІ СЌС‚РѕРј Р±СЂР°СѓР·РµСЂРµ'; $('msg').textContent = 'РћС‚РєСЂРѕР№С‚Рµ СЌС‚Сѓ СЃСЃС‹Р»РєСѓ РІ Р±СЂР°СѓР·РµСЂРµ С€Р»РµРјР° Meta Quest РґР»СЏ СЂРµР¶РёРјР° VR.'; }
 $('enterVR').onclick = enterVR;
 $('enterSmall').onclick = enterVR;
 $('enterView').onclick = () => {
