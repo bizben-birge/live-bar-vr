@@ -373,6 +373,58 @@ addEventListener('resize', () => {
   camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight);
 });
 
+// ------------------------------------------------------------------ live hall sound
+const SND = (() => {
+  const store = { get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch { return d; } },
+                  set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
+  let level = +store.get('bar.vol', 0.7), on = store.get('bar.on', '1') === '1', started = false, listener = null;
+  const al = new THREE.AudioLoader();
+  const load = (n) => al.loadAsync(`assets/audio/${n}.mp3`);
+  const apply = () => listener && listener.setMasterVolume(on ? level : 0);
+  async function start() {
+    if (started || TEST) return; started = true;
+    listener = new THREE.AudioListener();
+    camera.add(listener);
+    apply();
+    if (listener.context.state !== 'running') await listener.context.resume().catch(() => {});
+    const P = (x, y, z) => new THREE.Vector3(x, y, z);
+    const spots = { t1: P(-2.3, 1.1, -4.7), t2: P(2.2, 1.1, -4.0), booth: P(-3.9, 1.1, -8.3), bar: P(2.2, 1.3, -10.4) };
+    const gain = { t1: 0.55, t2: 0.5, booth: 0.6, bar: 0.75 };
+    const [bed, ...chat] = await Promise.all([load('bed'), ...Object.keys(spots).map((k) => load('chatter_' + k))]);
+    const b = new THREE.Audio(listener); b.setBuffer(bed); b.setLoop(true); b.setVolume(0.55); b.offset = Math.random() * 40; b.play();
+    Object.keys(spots).forEach((k, i) => {
+      const a = new THREE.PositionalAudio(listener);
+      a.setBuffer(chat[i]); a.setLoop(true); a.setRefDistance(2.2); a.setRolloffFactor(1.1); a.setVolume(gain[k]);
+      a.offset = Math.random() * 50; a.position.copy(spots[k]); scene.add(a); a.play();
+    });
+    // occasional glass clinks / cutlery around the room
+    const shots = await Promise.all(['clink_0', 'clink_1', 'clink_2', 'clink_3', 'cutlery_0', 'cutlery_1'].map(load));
+    const where = [spots.t1, spots.t2, spots.booth, spots.bar, spots.bar, P(1.65, 0.8, -7.4), P(3.45, 1.1, -7.9)];
+    const pool = Array.from({ length: 4 }, () => { const a = new THREE.PositionalAudio(listener); a.setRefDistance(1.6); scene.add(a); return a; });
+    let pi = 0;
+    const tick = () => {
+      const a = pool[pi++ % pool.length];
+      if (a.isPlaying) a.stop();
+      a.setBuffer(shots[Math.floor(Math.random() * shots.length)]);
+      a.position.copy(where[Math.floor(Math.random() * where.length)]).add(P(Math.random() - 0.5, 0, Math.random() - 0.5));
+      a.setPlaybackRate(0.9 + Math.random() * 0.25); a.setVolume(0.25 + Math.random() * 0.35); a.play();
+      setTimeout(tick, 2500 + Math.random() * 6000);
+    };
+    setTimeout(tick, 2000);
+  }
+  function setOn(v) { on = v; store.set('bar.on', on ? '1' : '0'); apply(); syncUI(); }
+  function setLevel(v) { level = v; store.set('bar.vol', String(v)); apply(); }
+  function syncUI() {
+    for (const id of ['sndBtn', 'sndMini']) { const el = $(id); if (el) { el.classList.toggle('off', !on); el.setAttribute('aria-pressed', on); } }
+    const sl = $('sndVol'); if (sl) sl.value = level;
+  }
+  syncUI();
+  $('sndBtn').onclick = () => setOn(!on);
+  $('sndMini').onclick = () => { start(); setOn(!on); };
+  $('sndVol').oninput = (e) => { setLevel(+e.target.value); if (!on) setOn(true); };
+  return { start, toggle: () => setOn(!on) };
+})();
+
 // ------------------------------------------------------------------ XR session
 // Recenter: wherever the singer stands/looks becomes "on stage, facing the audience".
 let recenterIn = -1;
@@ -392,6 +444,7 @@ renderer.xr.addEventListener('sessionstart', () => {
   for (let i = 0; i < 2; i++) {
     const c = renderer.xr.getController(i);
     c.addEventListener('selectstart', recenter);       // trigger / pinch = recenter
+    c.addEventListener('squeezestart', SND.toggle);    // grip = hall sound on/off
     rig.add(c);
   }
 });
@@ -402,6 +455,7 @@ renderer.xr.addEventListener('sessionend', () => {
 });
 
 async function enterVR() {
+  SND.start();
   try {
     const session = await navigator.xr.requestSession('immersive-vr', { optionalFeatures: ['local-floor', 'bounded-floor'] });
     await renderer.xr.setSession(session);
@@ -413,12 +467,14 @@ async function enterVR() {
 const xrOK = !!navigator.xr && await navigator.xr.isSessionSupported('immersive-vr').catch(() => false);
 $('prog').style.width = '100%';
 $('enterView').disabled = false;
-if (xrOK) { $('enterVR').disabled = false; $('msg').textContent = 'Готово. Нажмите «Войти в VR». В шлеме нажмите курок, чтобы встать лицом к залу.'; }
+if (xrOK) { $('enterVR').disabled = false; $('msg').textContent = 'Готово. Нажмите «Войти в VR». В шлеме: курок — встать лицом к залу, боковая кнопка — звук зала вкл/выкл.'; }
 else { $('enterVR').textContent = 'VR недоступен в этом браузере'; $('msg').textContent = 'Откройте эту ссылку в браузере шлема Meta Quest для режима VR.'; }
 $('enterVR').onclick = enterVR;
 $('enterSmall').onclick = enterVR;
 $('enterView').onclick = () => {
+  SND.start();
   $('ui').classList.add('hidden'); if (xrOK) $('enterSmall').style.display = 'block';
+  $('sndMini').style.display = 'grid';
   $('hint').style.opacity = 1; setTimeout(() => ($('hint').style.opacity = 0), 4000);
 };
 
