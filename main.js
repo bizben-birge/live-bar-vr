@@ -461,14 +461,14 @@ async function enterVR() {
     await renderer.xr.setSession(session);
     $('ui').classList.add('hidden'); $('enterSmall').style.display = 'none';
   } catch (err) {
-    $('msg').textContent = 'РќРµ СѓРґР°Р»РѕСЃСЊ Р·Р°РїСѓСЃС‚РёС‚СЊ VR: ' + err.message;
+    $('msg').textContent = 'Не удалось запустить VR: ' + err.message;
   }
 }
 const xrOK = !!navigator.xr && await navigator.xr.isSessionSupported('immersive-vr').catch(() => false);
 $('prog').style.width = '100%';
 $('enterView').disabled = false;
-if (xrOK) { $('enterVR').disabled = false; $('msg').textContent = 'Р“РѕС‚РѕРІРѕ. РќР°Р¶РјРёС‚Рµ В«Р’РѕР№С‚Рё РІ VRВ». Р’ С€Р»РµРјРµ: РєСѓСЂРѕРє вЂ” РІСЃС‚Р°С‚СЊ Р»РёС†РѕРј Рє Р·Р°Р»Сѓ, Р±РѕРєРѕРІР°СЏ РєРЅРѕРїРєР° вЂ” Р·РІСѓРє Р·Р°Р»Р° РІРєР»/РІС‹РєР».'; }
-else { $('enterVR').textContent = 'VR РЅРµРґРѕСЃС‚СѓРїРµРЅ РІ СЌС‚РѕРј Р±СЂР°СѓР·РµСЂРµ'; $('msg').textContent = 'РћС‚РєСЂРѕР№С‚Рµ СЌС‚Сѓ СЃСЃС‹Р»РєСѓ РІ Р±СЂР°СѓР·РµСЂРµ С€Р»РµРјР° Meta Quest РґР»СЏ СЂРµР¶РёРјР° VR.'; }
+if (xrOK) { $('enterVR').disabled = false; $('msg').textContent = 'Готово. Нажмите «Войти в VR». В шлеме: курок — встать лицом к залу, боковая кнопка — звук зала вкл/выкл.'; }
+else { $('enterVR').textContent = 'VR недоступен в этом браузере'; $('msg').textContent = 'Откройте эту ссылку в браузере шлема Meta Quest для режима VR.'; }
 $('enterVR').onclick = enterVR;
 $('enterSmall').onclick = enterVR;
 $('enterView').onclick = () => {
